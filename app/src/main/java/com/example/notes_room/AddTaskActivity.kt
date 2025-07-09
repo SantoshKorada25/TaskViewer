@@ -121,13 +121,13 @@ fun AddtaskScreen(taskViewModel: TaskViewModel){
         TaskList(tasks,taskViewModel, modifier = Modifier.padding(innerPadding))
     }
     if (showDialog){
-            AddTaskDialog(categoryOptions = listOf("Work", "Personal", "Fitness", "Study"),onDismiss = {showDialog=false}, onSave = {date,content,Unit-> {null}})
+            AddTaskDialog(categoryOptions = listOf("Work", "Personal", "Fitness", "Study"),onDismiss = {showDialog=false}, onSave = {date,category,description-> taskViewModel.insert(Task(0,date,category,description))})
     }
 }
 
 @Composable
 fun TaskList(tasksList:List<Task>,taskViewModel: TaskViewModel,modifier: Modifier = Modifier){
-    LazyColumn (modifier = Modifier.padding(16.dp)){
+    LazyColumn (modifier.padding(16.dp)){
         items(tasksList) {
             task -> TaskItem(task = task, onDelete = {taskViewModel.delete(task)} , onEdit = {})
         }
@@ -202,7 +202,7 @@ fun AddTaskDialog(
             Button(
                 onClick = {
                     if (content.isNotBlank() && selectedCategory.isNotBlank()) {
-                        onSave(dateCreated.toString(), content.trim(), selectedCategory)
+                        onSave(dateCreated.toString(), selectedCategory, content.trim())
                     }
                 }
             ) {
@@ -221,7 +221,6 @@ fun AddTaskDialog(
                     .fillMaxWidth()
                     .padding(8.dp)
 
-                     // Prevent dropdown clipping
             ) {
                 OutlinedTextField(
                     value = dateCreated.toString(),
