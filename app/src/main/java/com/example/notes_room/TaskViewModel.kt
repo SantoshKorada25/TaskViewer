@@ -1,5 +1,4 @@
 package com.example.notes_room
-
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -17,7 +16,4 @@ class TaskViewModel(application : Application) : AndroidViewModel(application) {
     fun insert(task: Task) = viewModelScope.launch {
         repository.insert(task)
     }
-    
-
-
 }
