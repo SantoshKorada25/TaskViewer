@@ -14,6 +14,7 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuDefaults
@@ -34,7 +36,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,10 +55,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -61,12 +68,14 @@ import java.util.Calendar
 import java.util.Date
 
 class AddTaskActivity : ComponentActivity() {
+    private lateinit var taskViewModel : TaskViewModel
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
         setContent {
             MaterialTheme {
-                    AddtaskScreen()
+                    AddtaskScreen(taskViewModel)
             }
         }
     }
@@ -74,16 +83,12 @@ class AddTaskActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddtaskScreen(){
+fun AddtaskScreen(taskViewModel: TaskViewModel){
     var showDialog   by remember { mutableStateOf(false) }
     var expanded   by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val dummyTasks = listOf(
-        "Buy groceries",
-        "Finish project report",
-        "Call mom",
-        "Workout at 6 PM"
-    )
+    val tasks by taskViewModel.allTasks.observeAsState(emptyList())
+
 
     Scaffold(
         topBar = {
@@ -112,24 +117,54 @@ fun AddtaskScreen(){
                 }
             )
         }
-    ){ paddingValues ->
-        Log.d("TAG", "AddtaskScreen: " + paddingValues)
-        LazyColumn(modifier = Modifier.padding(paddingValues)) {
-            items(dummyTasks) { task ->
-                Text(
-                    text = task,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-            }
-        }
-
-
+    ){ innerPadding ->
+        TaskList(tasks,taskViewModel, modifier = Modifier.padding(innerPadding))
     }
     if (showDialog){
             AddTaskDialog(categoryOptions = listOf("Work", "Personal", "Fitness", "Study"),onDismiss = {showDialog=false}, onSave = {date,content,Unit-> {null}})
+    }
+}
+
+@Composable
+fun TaskList(tasksList:List<Task>,taskViewModel: TaskViewModel,modifier: Modifier = Modifier){
+    LazyColumn (modifier = Modifier.padding(16.dp)){
+        items(tasksList) {
+            task -> TaskItem(task = task, onDelete = {taskViewModel.delete(task)} , onEdit = {})
+        }
+    }
+}
+
+@Composable
+fun TaskItem (task:Task , onDelete:() -> Unit , onEdit:() -> Unit){
+    Card (modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = 4.dp){
+        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                androidx.compose.material.Text(
+                    text = task.category,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color.DarkGray
+                )
+                androidx.compose.material.Text(
+                    text = task.date,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Column(modifier = Modifier.weight(0.1f)) {
+                androidx.compose.material.IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                Divider(modifier = Modifier.padding(4.dp))
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                }
+
+
+            }
+
+        }
     }
 }
 
