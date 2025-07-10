@@ -39,4 +39,4 @@ This app lets you create, view, edit, and delete notes and tasks efficiently.
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/yourusername/NotesTaskViewerApp.git
+git clone https://github.com/SantoshKorada25/TaskViewer.git
