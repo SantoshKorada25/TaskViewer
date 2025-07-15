@@ -68,6 +68,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.livedata.ktx.v291)
     implementation(libs.androidx.runtime.livedata)
-    implementation(libs.material3) // or latest version
-
+    implementation(libs.material3)
+    implementation (libs.androidx.material.icons.extended)
 }

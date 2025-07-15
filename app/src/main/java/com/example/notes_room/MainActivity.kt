@@ -30,7 +30,6 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
@@ -47,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
-import com.example.notes_room.ui.theme.Notes_roomTheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.Alignment
@@ -55,6 +53,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
+import com.example.notes_room.ui.theme.TaskViewerTheme
+
+import androidx.compose.material3.*
+import androidx.compose.ui.unit.sp
+
 class MainActivity : ComponentActivity() {
     private lateinit var noteViewModel: NoteViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         enableEdgeToEdge()
         setContent {
-            Notes_roomTheme {
+            TaskViewerTheme {
                     NotesApp(
                         noteViewModel
                     )
@@ -72,43 +75,66 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesApp(noteViewModel: NoteViewModel) {
     val notes by noteViewModel.allNotes.observeAsState(emptyList())
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Notes") },
+                title = { Text("My Notes", color =Color.White , fontSize = 20.sp) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 actions = {
                     IconButton(onClick = { expanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
                     }
                     DropdownMenu(
-                        modifier = Modifier.padding(10.dp).border(10.dp,Color.Gray, shape = RoundedCornerShape(4.dp)),
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Gray,
+                                shape = RoundedCornerShape(4.dp)
+                            ),
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        CustomDropdownItem(
-                            icon = Icons.Default.Add,
-                            text = "Add Note",
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Add Note")
+                                }
+                            },
                             onClick = {
                                 showAddNoteDialog = true
                                 expanded = false
                             }
                         )
-                        CustomDropdownItem(
-                            icon = Icons.Default.CheckCircle,
-                            text = "Add Task",
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Task")
+                                }
+                            },
                             onClick = {
                                 expanded = false
                                 context.startActivity(Intent(context, AddTaskActivity::class.java))
                             }
                         )
                     }
-                }
+                },
             )
         }
     ) { innerPadding ->
@@ -179,18 +205,27 @@ fun NotesList(
     noteViewModel: NoteViewModel,
     modifier: Modifier = Modifier
 ) {
+    var noteToEdit by remember { mutableStateOf<Note?>(null) }
     LazyColumn(modifier = modifier.padding(16.dp)) {
         items(notes) { note ->
             NoteItem(
                 note = note,
                 onDelete = { noteViewModel.delete(note) },
                 onEdit = {
-                    // You can hook edit here if you want
+                    noteToEdit = note
                 }
             )
         }
     }
+    if (noteToEdit != null){
+        EditNoteDialog(note = noteToEdit!!, onDismiss = {noteToEdit=null}, onSave = { updatedNote ->
+            noteViewModel.update(updatedNote)
+            noteToEdit = null
+        })
+    }
 }
+
+
 
 @Composable
 fun AddNoteDialog(
